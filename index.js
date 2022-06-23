@@ -549,7 +549,7 @@ function deleteEmployee() {
   });
 }
 
-// View all departments and show their total utilized department budget
+// View a departments and show its total utilized department budget
 function viewDepartmentBudget() {
   connection.query(
     'SELECT department.id, department.name, SUM(role.salary) AS utilized_budget FROM employee, LEFT JOIN role on employee.role_id = role.id LEFT JOIN department on role.department_id = department.id GROUP BY department.id, department.name',
@@ -560,7 +560,7 @@ function viewDepartmentBudget() {
   });
 }
 
-// Exit the application
+// Exits the application
 function quit() {
   console.log("Goodbye!");
   process.exit();
