@@ -1,0 +1,31 @@
+{
+    "name": "employee_tracker",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "start": "node server.js"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/jcd2k/Employee_Tracker.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/jcd2k/Employee_Tracker/issues"
+    },
+    "homepage": "https://github.com/jcd2k/Employee_Tracker#readme",
+    "dependencies": {
+      "console.table": "^0.10.0",
+      "dotenv": "^16.0.0",
+      "express": "^4.18.1",
+      "inquirer": "^8.2.4",
+      "inquirer-promise": "^1.0.0",
+      "mysql2": "^2.3.3",
+      "nodemon": "^2.0.16",
+      "sequelize": "^6.19.0"
+    }
+  }
