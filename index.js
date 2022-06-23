@@ -110,7 +110,7 @@ function loadMainPrompts() {
     })
 }
 
-//loops through the job titles
+// List of Roles
 function roles() {
   let roleArr = [];
   connection.query(
@@ -124,7 +124,7 @@ function roles() {
   return roleArr;
 }
 
-//loops through all the managers
+// List of Managers
 function managers() {
   let managerArr = [];
   connection.query(
