@@ -110,13 +110,41 @@ function loadMainPrompts() {
     })
 }
 
+//loops through the job titles
+function roles() {
+  let roleArr = [];
+  connection.query(
+    "SELECT * FROM role", 
+    function (err, data) {
+    if (err) throw err;
+    data.forEach((role) => {
+      roleArr.push(role.title);
+    });
+  });
+  return roleArr;
+}
+
+//loops through all the managers
+function managers() {
+  let managerArr = [];
+  connection.query(
+    `SELECT CONCAT (first_name, " ",  last_name) AS name FROM employee WHERE manager_id IS NULL`,
+    function (err, data) {
+    if (err) throw err;
+    data.forEach((manager) => {
+      managerArr.push(manager.name);
+    });
+  });
+  return managerArr;
+}
+
 // View all Derpartments
 function viewDepartments() {
   connection.query(
     'SELECT * FROM department',
     function (err,data) {
       if (err) throw err;
-      cTAble(data);
+      cTable(data);
       loadMainPrompts();
     }
   );
@@ -128,7 +156,7 @@ function viewRoles() {
     'SELECT role.id, role.title, department.department_name, role.salary FROM role LEFT JOIN department ON department.id = role.department_id ',
     function (err, data) {
       if (err) throw err;
-      cTAble(data);
+      cTable(data);
       loadMainPrompts();
     }
   );
@@ -425,85 +453,111 @@ function updateEmployeeManager() {
 
 // Delete a department
 function deleteDepartment() {
-  db.findAllDepartments()
-    .then(([rows]) => {
-      let departments = rows;
-      const departmentChoices = departments.map(({ id, name }) => ({
-        name: name,
-        value: id
-      }));
 
-      prompt({
-        type: "list",
-        name: "departmentId",
-        message:
-          "Which department would you like to remove? (Warning: This will also remove associated roles and employees)",
-        choices: departmentChoices
-      })
-        .then(res => db.removeDepartment(res.departmentId))
-        .then(() => console.log(`Removed department from the database`))
-        .then(() => loadMainPrompts())
-    })
+  connection.query(
+    `SELECT * FROM department`,
+    function (err, data) {
+    if (err) throw err;
+
+    const department = data.map(({ name, id }) => ({ name: name, value: id }));
+
+    inquirer.prompt([
+        {
+          type: "list",
+          name: "department",
+          message: "What department do you want to delete?",
+          choices: department,
+        },
+      ])
+      .then((answer) => {
+        const department = answer.department;
+
+        connection.query(
+          `DELETE FROM department WHERE id = ?`, department,
+          function (err, department) {
+          if (err) throw err;
+          console.log(`${department.name} successfully deleted`);
+          loadMainPrompts();
+        });
+      });
+  });
 }
 
 // Delete a role
 function deleteRole() {
-  db.findAllRoles()
-    .then(([rows]) => {
-      let roles = rows;
-      const roleChoices = roles.map(({ id, title }) => ({
-        name: title,
-        value: id
-      }));
 
-      prompt([
+  connection.query(
+    `SELECT * FROM role`,
+    function (err, data) {
+    if (err) throw err;
+
+    const role = data.map(({ title, id }) => ({ name: title, value: id }));
+
+    inquirer.prompt([
         {
           type: "list",
-          name: "roleId",
-          message:
-            "Which role do you want to remove? (Warning: This will also remove employees)",
-          choices: roleChoices
-        }
+          name: "role",
+          message: "Which role would you like to delete?",
+          choices: role,
+        },
       ])
-        .then(res => db.removeRole(res.roleId))
-        .then(() => console.log("Removed role from the database"))
-        .then(() => loadMainPrompts())
-    })
+      .then((data) => {
+        const role = data.role;
+
+        connection.query(`DELETE FROM role WHERE id = ?`, role,
+        function (err, role) {
+          if (err) throw err;
+          console.log(`${role.title} successfully deleted`);
+          loadMainPrompts();
+        });
+      });
+  });
 }
 
 // Delete an employee
-  function deleteEmployee() {
-    db.findAllEmployees()
-    .then(([rows]) => {
-      let employees = rows;
-      const employeeChoices = employees.map(({ id, first_name, last_name }) => ({
-        name: `${first_name} ${last_name}`,
-        value: id
-      }));
+function deleteEmployee() {
 
-    prompt([
-      {
-        type: "list",
-        name: "employeeId",
-        message: "Which employee do you want to remove?",
-        choices: employeeChoices
-      }
-    ])
-    .then(res => db.removeEmployee(res.employeeId))
-    .then(() => console.log("Removed employee from the database"))
-    .then(() => loadMainPrompts())
-  })
+  connection.query(
+    `SELECT * FROM employee`,
+    function (err, data) {
+    if (err) throw err;
+
+    const employees = data.map(({ id, first_name, last_name }) => ({
+      name: first_name + " " + last_name,
+      value: id,
+    }));
+
+    inquirer.prompt([
+        {
+          type: "list",
+          name: "name",
+          message: "Which employee would you like to delete?",
+          choices: employees,
+        },
+      ])
+      .then((data) => {
+        const employee = data.name; 
+
+        connection.query(
+          `DELETE FROM employee WHERE id = ?`, employee,
+          function (err, employee) {
+          if (err) throw err;
+          console.log(`${employee.name} successfully deleted`);
+          loadMainPrompts();
+        });
+      });
+  });
 }
 
 // View all departments and show their total utilized department budget
 function viewDepartmentBudget() {
-  db.viewDepartmentBudgets()
-    .then(([rows]) => {
-      let departments = rows;
-      console.log("\n");
-      console.table(departments);
-    })
-    .then(() => loadMainPrompts());
+  connection.query(
+    'SELECT department.id, department.name, SUM(role.salary) AS utilized_budget FROM employee, LEFT JOIN role on employee.role_id = role.id LEFT JOIN department on role.department_id = department.id GROUP BY department.id, department.name',
+    function (err, data) {
+    if (err) throw err;
+    console.table("\n Department budget: \n", data, "\n");
+    loadMainPrompts();
+  });
 }
 
 // Exit the application
